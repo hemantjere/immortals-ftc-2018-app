@@ -52,7 +52,7 @@ import com.qualcomm.robotcore.util.Range;
  */
 
 @TeleOp(name="Linear Drive Home", group="Linear Opmode")
-// @Disabled
+@Disabled
 public class BasicOpMode_Linear extends LinearOpMode {
     private float DRIVE_MULTIPLE = .4f;
     private float ELEMENT_LIFT_MULTIPLE = 1f;

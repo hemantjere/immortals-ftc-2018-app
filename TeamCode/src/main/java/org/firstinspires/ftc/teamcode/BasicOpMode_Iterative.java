@@ -52,7 +52,7 @@ import com.qualcomm.robotcore.util.Range;
  */
 
 @TeleOp(name="Tank Drive", group="Iterative Opmode")
-// @Disabled
+@Disabled
 public class BasicOpMode_Iterative extends OpMode
 {
     /*

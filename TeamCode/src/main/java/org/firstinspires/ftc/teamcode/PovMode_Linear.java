@@ -48,11 +48,11 @@ import com.qualcomm.robotcore.util.Range;
 public class PovMode_Linear extends LinearOpMode {
 
     // drive multiples (to set motor power)
-    final private float FAST_DRIVE_MULTIPLE = .5f;
+    final private float FAST_DRIVE_MULTIPLE = .6f;
     final private float SLOW_DRIVE_MULTIPLE = .3f;
     final private float ELEMENT_LIFT_MULTIPLE = 1f;
     final private float COLLECTOR_MULTIPLE = .3f;
-    final private float ROBOT_ARM_UP_MULTIPLE = .5f;
+    final private float ROBOT_ARM_UP_MULTIPLE = 1f;
     final private float ROBOT_ARM_DOWN_MULTIPLE = 1f;
 
     // target motor positions for element lift motor
@@ -90,7 +90,7 @@ public class PovMode_Linear extends LinearOpMode {
 
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery
-        //TODO not correct, but it's working for now...
+
         leftDriveMotor.setDirection(DcMotor.Direction.FORWARD);
         rightDriveMotor.setDirection(DcMotor.Direction.FORWARD);
         elementLiftMotor.setDirection(DcMotor.Direction.FORWARD);
@@ -98,7 +98,7 @@ public class PovMode_Linear extends LinearOpMode {
         robotLiftMotor.setDirection(DcMotor.Direction.FORWARD);
 
         // reset encoders and set current motor positions
-//        robotLiftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        //robotLiftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         robotArmStartPosition = robotLiftMotor.getCurrentPosition();
 
         // set modes
@@ -107,6 +107,8 @@ public class PovMode_Linear extends LinearOpMode {
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
         runtime.reset();
+
+
 
         // Setup a variable for each drive wheel to save power level for telemetry
         double leftDrivePower = 0.0d;
@@ -184,6 +186,16 @@ public class PovMode_Linear extends LinearOpMode {
                 collectorPower = 0.0f;
                 collectorMotor.setPower(collectorPower);
             }
+            //robot lift
+
+            double liftControl = gamepad2.left_stick_y;
+            robotLiftPower = Range.clip(liftControl* ROBOT_ARM_UP_MULTIPLE, -1.0, 1.0);
+            robotLiftMotor.setPower(robotLiftPower);
+            //Down: 1082
+            //Up: -76348
+
+
+
 
 
             // Show the elapsed game time and wheel power.
@@ -191,10 +203,8 @@ public class PovMode_Linear extends LinearOpMode {
             telemetry.addData("left stick", "left stick (%.2f)", gamepad1.left_stick_y);
             telemetry.addData("right stick", "right stick (%.2f)", gamepad1.right_stick_x);
             telemetry.addData("Drive Motors", "left (%.2f), right (%.2f)", leftDrivePower, rightDrivePower);
-            if (gamepad2.left_stick_y != 0) {
-                telemetry.addData("Element Lift position", "range (%d) - (%d), current (%d), power (%.2f)", ELEMENT_DOWN_TARGET_POSITION, ELEMENT_UP_TARGET_POSITION, elementLiftMotor.getCurrentPosition(), elementLiftPower);
-            }
-            telemetry.addData("Robot Lift position", "target (%d), current (%d), power (%.2f)", ROBOT_ARM_UP_TARGET_POSITION, robotLiftMotor.getCurrentPosition() - robotArmStartPosition, robotLiftPower);
+            telemetry.addData("GP2 left stick", "GP2 left stick (%.2f)", gamepad2.left_stick_y);
+            telemetry.addData("Robot Lift position", "position (%d)",  robotLiftMotor.getCurrentPosition());
             telemetry.update();
 
         }

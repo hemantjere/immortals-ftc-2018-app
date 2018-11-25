@@ -139,7 +139,6 @@ public class testMoveForwardTimeFast extends LinearOpMode {
 
         //spinTime(0.2d, false, 2.4);
         moveForwardTime(0.4d, true, 5);
-
     }
 
     public double getError(double targetAngle) {
