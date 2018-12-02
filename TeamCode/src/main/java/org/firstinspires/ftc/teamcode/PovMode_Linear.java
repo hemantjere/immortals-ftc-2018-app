@@ -34,6 +34,8 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
@@ -52,16 +54,7 @@ public class PovMode_Linear extends LinearOpMode {
     final private float SLOW_DRIVE_MULTIPLE = .3f;
     final private float ELEMENT_LIFT_MULTIPLE = 1f;
     final private float COLLECTOR_MULTIPLE = .3f;
-    final private float ROBOT_ARM_UP_MULTIPLE = 1f;
-    final private float ROBOT_ARM_DOWN_MULTIPLE = 1f;
-
-    // target motor positions for element lift motor
-    final int ELEMENT_UP_TARGET_POSITION = 1440 * 5;
-    final int ELEMENT_DOWN_TARGET_POSITION = 0;
-
-    // target motor positions for robot lift motor
-    final int ROBOT_ARM_UP_TARGET_POSITION = (int) (1440 * 1.43);
-    final int ROBOT_ARM_DOWN_TARGET_POSITION = 0;
+    final private float ROBOT_LIFT_MULTIPLE = 1f;
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
@@ -70,6 +63,11 @@ public class PovMode_Linear extends LinearOpMode {
     private DcMotor elementLiftMotor = null;
     private DcMotor collectorMotor = null;
     private DcMotor robotLiftMotor = null;
+    private Servo armServo = null;
+    private Servo liftLockServo = null;
+
+    private DigitalChannel liftTouchUp = null;
+    private DigitalChannel liftTouchDown = null; // Hardware Device Object
 
     // robot lift start position
     private int robotArmStartPosition;
@@ -87,27 +85,28 @@ public class PovMode_Linear extends LinearOpMode {
         collectorMotor = hardwareMap.get(DcMotor.class, "collector");
         elementLiftMotor = hardwareMap.get(DcMotor.class, "element_lift");
         robotLiftMotor = hardwareMap.get(DcMotor.class, "robot_lift");
+        liftLockServo = hardwareMap.get(Servo.class, "latch_servo");
+        armServo = hardwareMap.get(Servo.class, "Arm_Servo");
 
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery
 
-        leftDriveMotor.setDirection(DcMotor.Direction.FORWARD);
+        leftDriveMotor.setDirection(DcMotor.Direction.REVERSE);
         rightDriveMotor.setDirection(DcMotor.Direction.FORWARD);
         elementLiftMotor.setDirection(DcMotor.Direction.FORWARD);
         collectorMotor.setDirection(DcMotor.Direction.FORWARD);
         robotLiftMotor.setDirection(DcMotor.Direction.FORWARD);
 
-        // reset encoders and set current motor positions
-        //robotLiftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        robotArmStartPosition = robotLiftMotor.getCurrentPosition();
-
-        // set modes
-//        robotLiftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        // get a reference to our digitalTouch object.
+        liftTouchUp = hardwareMap.get(DigitalChannel.class, "lift_touch_up");
+        liftTouchDown = hardwareMap.get(DigitalChannel.class, "lift_touch_down");
+        // set the digital channel to input.
+        liftTouchUp.setMode(DigitalChannel.Mode.INPUT);
+        liftTouchDown.setMode(DigitalChannel.Mode.INPUT);
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
         runtime.reset();
-
 
 
         // Setup a variable for each drive wheel to save power level for telemetry
@@ -158,7 +157,6 @@ public class PovMode_Linear extends LinearOpMode {
                 collectorMotor.setPower(0);
             }
 
-
             if (gamepad2.dpad_down) {
                 double timeNow = getRuntime();
                 while (getRuntime() < timeNow + 0.1) {
@@ -172,39 +170,49 @@ public class PovMode_Linear extends LinearOpMode {
                 collectorPower = 0.0f;
                 collectorMotor.setPower(collectorPower);
             }
-            if (gamepad2.y) {
-                collectorMotor.setDirection(DcMotor.Direction.FORWARD);
-                collectorPower = 0.7f;
-                collectorMotor.setPower(collectorPower);
+            if (gamepad2.y){
+                armServo.setPosition(0);
+                sleep(100);
             }
-            if (gamepad2.a) {
-                collectorMotor.setDirection(DcMotor.Direction.REVERSE);
-                collectorPower = 0.7f;
-                collectorMotor.setPower(collectorPower);
+            if (gamepad2.a){
+                armServo.setPosition(1);
+                sleep(100);
             }
-            if (gamepad2.x) {
-                collectorPower = 0.0f;
-                collectorMotor.setPower(collectorPower);
+            if (gamepad2.x){
+                liftLockServo.setPosition(0);
+                sleep(100);
             }
+            if (gamepad2.b){
+                liftLockServo.setPosition(0.5);
+                sleep(100);
+            }
+
+            // arm servo
+            //lift lock servo
+
             //robot lift
 
             double liftControl = gamepad2.left_stick_y;
-            robotLiftPower = Range.clip(liftControl* ROBOT_ARM_UP_MULTIPLE, -1.0, 1.0);
+            robotLiftPower = Range.clip(liftControl * ROBOT_LIFT_MULTIPLE, -1.0, 1.0);
             robotLiftMotor.setPower(robotLiftPower);
-            //Down: 1082
-            //Up: -76348
 
+            if ((liftControl < 0) && (liftTouchUp.getState() == false)) {
+               robotLiftMotor.setPower(0.0);
+           }
 
-
-
-
+           if ((liftControl > 0) && (liftTouchDown.getState() == false)){
+                robotLiftMotor.setPower(0.0);
+           }
+           if (liftControl == 0){
+                robotLiftMotor.setPower(0.0);
+           }
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("left stick", "left stick (%.2f)", gamepad1.left_stick_y);
             telemetry.addData("right stick", "right stick (%.2f)", gamepad1.right_stick_x);
             telemetry.addData("Drive Motors", "left (%.2f), right (%.2f)", leftDrivePower, rightDrivePower);
             telemetry.addData("GP2 left stick", "GP2 left stick (%.2f)", gamepad2.left_stick_y);
-            telemetry.addData("Robot Lift position", "position (%d)",  robotLiftMotor.getCurrentPosition());
+            telemetry.addData("Robot Lift position", "position (%d)", robotLiftMotor.getCurrentPosition());
             telemetry.update();
 
         }
