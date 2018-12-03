@@ -93,7 +93,6 @@ public class PovMode_Linear extends LinearOpMode {
         rightDriveMotor.setDirection(DcMotor.Direction.FORWARD);
         elementLiftMotor.setDirection(DcMotor.Direction.FORWARD);
         collectorMotor.setDirection(DcMotor.Direction.FORWARD);
-        robotLiftMotor.setDirection(DcMotor.Direction.FORWARD);
 
         // get a reference to our digitalTouch object.
         liftTouchUp = hardwareMap.get(DigitalChannel.class, "lift_touch_up");
@@ -190,20 +189,22 @@ public class PovMode_Linear extends LinearOpMode {
 
             //robot lift
 
-            double liftControl = gamepad2.left_stick_y;
-            robotLiftPower = Range.clip(liftControl * ROBOT_LIFT_MULTIPLE, -1.0, 1.0);
-
-
             if ((gamepad2.dpad_up) && (liftTouchUp.getState() == true)){
-                robotLiftMotor.setPower(ROBOT_LIFT_MULTIPLE);
+                robotLiftMotor.setDirection(DcMotor.Direction.FORWARD);
+                robotLiftMotor.setPower(1.0d);
             } else {
-                    robotLiftMotor.setPower(0.0);
+                if (! gamepad2.dpad_down) {
+                    robotLiftMotor.setPower(0.0d);
+                }
             }
 
             if ((gamepad2.dpad_down) && (liftTouchDown.getState() == true)){
-                robotLiftMotor.setPower(ROBOT_LIFT_MULTIPLE);
+                robotLiftMotor.setDirection(DcMotor.Direction.REVERSE);
+                robotLiftMotor.setPower(1.0d);
             } else {
-                robotLiftMotor.setPower(0.0);
+                if (! gamepad2.dpad_up) {
+                    robotLiftMotor.setPower(0.0d);
+                }
             }
 
             // Show the elapsed game time and wheel power.
