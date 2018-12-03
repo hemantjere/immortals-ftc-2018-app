@@ -69,8 +69,6 @@ public class PovMode_Linear extends LinearOpMode {
     private DigitalChannel liftTouchUp = null;
     private DigitalChannel liftTouchDown = null; // Hardware Device Object
 
-    // robot lift start position
-    private int robotArmStartPosition;
 
     @Override
     public void runOpMode() {
@@ -147,7 +145,7 @@ public class PovMode_Linear extends LinearOpMode {
              */
 
             // collector
-            if (gamepad2.dpad_up) {
+            /*if (gamepad2.dpad_up) {
                 double timeNow = getRuntime();
                 while (getRuntime() < timeNow + 0.1) {
                     collectorMotor.setDirection(DcMotor.Direction.FORWARD);
@@ -169,7 +167,7 @@ public class PovMode_Linear extends LinearOpMode {
             if (gamepad2.dpad_left) {
                 collectorPower = 0.0f;
                 collectorMotor.setPower(collectorPower);
-            }
+            }*/
             if (gamepad2.y){
                 armServo.setPosition(0);
                 sleep(100);
@@ -194,18 +192,20 @@ public class PovMode_Linear extends LinearOpMode {
 
             double liftControl = gamepad2.left_stick_y;
             robotLiftPower = Range.clip(liftControl * ROBOT_LIFT_MULTIPLE, -1.0, 1.0);
-            robotLiftMotor.setPower(robotLiftPower);
 
-            if ((liftControl < 0) && (liftTouchUp.getState() == false)) {
-               robotLiftMotor.setPower(0.0);
-           }
 
-           if ((liftControl > 0) && (liftTouchDown.getState() == false)){
+            if ((gamepad2.dpad_up) && (liftTouchUp.getState() == true)){
+                robotLiftMotor.setPower(ROBOT_LIFT_MULTIPLE);
+            } else {
+                    robotLiftMotor.setPower(0.0);
+            }
+
+            if ((gamepad2.dpad_down) && (liftTouchDown.getState() == true)){
+                robotLiftMotor.setPower(ROBOT_LIFT_MULTIPLE);
+            } else {
                 robotLiftMotor.setPower(0.0);
-           }
-           if (liftControl == 0){
-                robotLiftMotor.setPower(0.0);
-           }
+            }
+
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("left stick", "left stick (%.2f)", gamepad1.left_stick_y);
